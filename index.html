@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Wi-Fi - Yolk Brands</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400&display=swap');
+        
+        html, body { 
+            background-color: #14172a !important; 
+            margin: 0 !important; 
+            min-height: 100vh;
+            font-family: 'Lora', serif !important;
+        }
+        label {
+            color: #ffffff !important;
+            font-family: 'Lora', serif !important;
+            font-weight: 400 !important;
+            font-size: 16px !important;
+        }
+        input[type="text"], input[type="email"] {
+            background: transparent !important;
+            border: 1px solid rgba(255,255,255,0.4) !important;
+            color: #ffffff !important;
+            border-radius: 50px !important;
+            padding: 12px 20px !important;
+            width: 100% !important;
+            font-family: 'Lora', serif !important;
+            transition: all 0.3s ease !important;
+            outline: none;
+        }
+        input[type="text"]:hover, input[type="email"]:hover,
+        input[type="text"]:focus, input[type="email"]:focus {
+            border-color: #ffffff !important;
+            background-color: rgba(255,255,255,0.05) !important;
+        }
+        .btn-connect {
+            background: transparent !important;
+            border: 1px solid rgba(255,255,255,0.4) !important;
+            border-radius: 50px !important;
+            color: #ffffff !important;
+            font-family: 'Lora', serif !important;
+            font-size: 18px !important;
+            padding: 16px 50px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            outline: none;
+        }
+        .btn-connect:hover {
+            background: #ffffff !important;
+            color: #14172a !important;
+        }
+        .btn-connect:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .custom-checkbox {
+            width: 18px !important;
+            height: 18px !important;
+            cursor: pointer !important;
+            flex-shrink: 0 !important;
+        }
+        #status-msg {
+            font-size: 12px;
+            margin-top: 10px;
+            color: rgba(255,255,255,0.7);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-6">
+
+    <div class="w-full max-w-md space-y-8 text-center">
+        <!-- Logo -->
+        <div class="flex justify-center mb-4">
+            <img 
+                src="https://yolkbrands.com/wp-content/uploads/2026/02/02750_02_YolkBrands_Logo_03_white-1.png" 
+                alt="Yolk Brands" 
+                style="height:80px; width:auto;"
+                onerror="this.src='https://placehold.co/400x150/14172a/fff?text=YOLK+BRANDS'"
+            >
+        </div>
+
+        <!-- Form Card -->
+        <div class="glass-card p-8 rounded-[40px] shadow-2xl text-left">
+            <h1 class="text-xl font-normal mb-8 text-center text-white opacity-90">guest wi-fi</h1>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block mb-2 ml-4">first name</label>
+                    <input type="text" id="fname" required placeholder="enter first name">
+                </div>
+                <div>
+                    <label class="block mb-2 ml-4">last name</label>
+                    <input type="text" id="lname" required placeholder="enter last name">
+                </div>
+                <div>
+                    <label class="block mb-2 ml-4">email address</label>
+                    <input type="email" id="email_input" required placeholder="enter email address">
+                </div>
+
+                <div class="flex items-start space-x-3 pt-2 px-2">
+                    <input type="checkbox" id="terms" required class="custom-checkbox mt-1">
+                    <label for="terms" class="text-xs text-gray-400 leading-relaxed">
+                        i agree to the <a href="#" class="underline text-white">terms of use</a> 
+                        and consent to receive email communications from yolk brands.
+                    </label>
+                </div>
+
+                <div class="flex flex-col items-center pt-4">
+                    <button type="button" id="submit-btn" class="btn-connect">
+                        connect to wifi
+                    </button>
+                    <div id="status-msg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySJA1BKFtUV9VjAx43cHnPbSiYTzvlFy7nWqFkKYI8IFHeLQ79hSKYc-P2bXgcw1CD/exec';
+        
+        const params = new URLSearchParams(window.location.search);
+        const mac = params.get('mac') || '';
+        const ip = params.get('ip') || '';
+        const essid = params.get('essid') || params.get('ssid') || '';
+
+        document.getElementById('submit-btn').addEventListener('click', async function() {
+            const fname = document.getElementById('fname').value.trim();
+            const lname = document.getElementById('lname').value.trim();
+            const email = document.getElementById('email_input').value.trim();
+            const terms = document.getElementById('terms').checked;
+            
+            if (!fname || !lname || !email) {
+                document.getElementById('status-msg').innerText = 'please fill in all fields.';
+                return;
+            }
+            if (!terms) {
+                document.getElementById('status-msg').innerText = 'please accept the terms to continue.';
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerText = 'connecting...';
+            
+            // Save to Google Sheets
+            try {
+                await Promise.race([
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fname, lname, email, mac, essid, ip })
+                    }),
+                    new Promise(resolve => setTimeout(resolve, 2000))
+                ]);
+            } catch (err) { 
+                console.warn('Save failed:', err); 
+            }
+            
+            // Redirect to acknowledgment page on SAME subdomain
+            window.location.href = '/success.html';
+        });
+    </script>
+</body>
+</html>
